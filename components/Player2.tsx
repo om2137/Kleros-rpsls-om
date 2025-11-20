@@ -11,16 +11,25 @@ import { J2Timeout } from "./Timeout";
 export default function Player2({ gameAddress }: { gameAddress: string; }) {
 
     const [selectedMove, setSelectedMove] = useState<Move>();
-    // const [p2Address, setP2Address] = useState('');
+    const p2Address = localStorage.getItem('p2');
     const [played, setPlayed] = useState(false);
-    const [finished, setFinished] = useState(false)
-    const p2stake = '0.001';
+    const [finished, setFinished] = useState(false);
+    const p2stake = localStorage.getItem('stake');
+    const [loading, setLoading] = useState(false)
 
     async function p2Move() {
         try {
             console.log('click')
             const signer = await getSigner();
+            console.log(p2Address, '===', signer.address)
+            if (p2Address !== signer.address.toLowerCase()) {
+                alert('please select correct account');
+                return;
+            }
+            setLoading(true)
             const game = new ethers.Contract(gameAddress, RPSArtificates.abi, signer)
+
+            if (!p2stake || p2stake === null) { alert('Invalid Stake'); return; }
 
             const stake = ethers.parseEther(p2stake)
             const play = await game.play(selectedMove?.value, { value: stake });
@@ -30,7 +39,7 @@ export default function Player2({ gameAddress }: { gameAddress: string; }) {
 
         } catch (error) {
             console.log(error)
-        }
+        } finally { setLoading(false) }
     }
 
     async function watcher() {
@@ -43,7 +52,6 @@ export default function Player2({ gameAddress }: { gameAddress: string; }) {
 
     useEffect(() => {
         if (!gameAddress) return;
-
         const interval = setInterval(async () => {
             watcher();
         }, 1000);
@@ -65,52 +73,71 @@ export default function Player2({ gameAddress }: { gameAddress: string; }) {
     }, [gameAddress, finished]);
 
     return (
-        <div className="min-h-screen flex flex-col gap-6 justify-center items-center">
-            <div>
-                game: {gameAddress} <br />
-                For Player: { }
-            </div>
+        <div className="min-h-[90vh] flex justify-center items-center">
 
-            <div>
-                <J2Timeout gameAddress={gameAddress} played={played} />
-            </div>
-            <div className="flex capitalize items-center justify-center">
-                player 2 stake: {p2stake}
-            </div>
-            <div className='flex items-center capitalize text-xl'>
-                <div>Choose Move:</div>
-                {
-                    Moves.map((m) =>
-                        <Button
-                            key={m.value}
-                            lable={m.name}
-                            background={`cursor-pointer 
-                                            ${selectedMove && selectedMove.value === m.value ?
-                                    'bg-sky-950 border border-sky-950 text-white hover:bg-white hover:text-sky-950' :
-                                    'bg-white border border-sky-950 text-sky-950 hover:bg-sky-950 hover:text-white'} 
-                                            `}
-                            onClick={() => { setSelectedMove(m) }}
-                        />
-                    )
+            <div className="flex flex-col gap-3 justify-center items-start bg-sky-100 rounded-xl p-10">
+                <h1 className="w-full font-bold flex justify-center text-xl">Player 2</h1>
+                <div className="capitalize px-2">
+                    <span className="font-semibold">game:</span> {gameAddress}
+                </div>
+
+                <div className="flex capitalize items-center justify-center px-2">
+                    <span className="font-semibold">player 2 stake: </span>{p2stake}
+                </div>
+                {selectedMove &&
+                    <div className='bg-sky-50 p-2 rounded-full capitalize'>
+                        <span>Selected Move:</span> <span className='font-bold'>{selectedMove.name}</span>
+                    </div>
                 }
-            </div>
-            <div className='text-xl'>
-                {selectedMove && `Selected Move: ${selectedMove.name}`}
-            </div>
-            {played ?
-                finished ? <>game Ended</> :
-                    <div>Waiting for player 1 to revel</div>
-                : <div>
+                {loading && <div className="animate-pulse">Deploying Move...</div>}
 
-                    <Button
-                        lable={'Play'}
-                        disabled={selectedMove ? false : true}
-                        onClick={() => {
-                            p2Move();
-                        }}
-                    />
+                {!played && !loading ? <div className='flex flex-col justify-start items-start capitalize text-xl'>
+                    <div className='pb-2 px-2 text-lg font-semibold'>Choose Move:</div>
+                    <div>
+                        {
+                            Moves.map((m) =>
+                                <Button
+                                    key={m.value}
+                                    lable={m.name}
+                                    style=' rounded-full py-2 px-4 mx-2 capitalize'
+                                    background={`cursor-pointer 
+                                            ${selectedMove && selectedMove.value === m.value ?
+                                            'bg-sky-950 border border-sky-950 text-white ' :
+                                            'bg-sky-50 border border-sky-950 text-sky-950 hover:bg-sky-950 hover:text-white'} 
+                                            `}
+                                    onClick={() => { setSelectedMove(m) }}
+                                />
+                            )
+                        }
+                    </div>
+                </div>
+                    :
+                    <div className="px-2">
+                        <J2Timeout gameAddress={gameAddress} played={played} />
+                    </div>
+                }
 
-                </div>}
+                {played || finished ?
+                    finished ?
+                        <div className="flex w-full justify-center font-semibold capitalize">
+                            game Ended
+                        </div> :
+                        <div className="flex justify-center w-full animate-pulse">
+                            Waiting for player 1 to revel ...
+                        </div>
+                    : <div className="w-full flex justify-center">
+
+                        <Button
+                            lable={'Play'}
+                            disabled={selectedMove ? false : true}
+                            onClick={() => {
+                                p2Move();
+                            }}
+                        />
+
+                    </div>}
+            </div>
+
         </div>
     )
 }
