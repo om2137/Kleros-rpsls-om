@@ -3,12 +3,12 @@ import Button from './Button';
 import { ethers } from 'ethers';
 import { getProvider, getSigner } from '@/utils/connect';
 import RPSArtificate from '@/utils/RPS.json'
-import { J1Timeout } from './Timeout';
 
 export default function Solve({ gameAddress }: { gameAddress: string }) {
 
     const [showSolve, setShowSolve] = useState(false);
-    const [finished, setFinished] = useState(false)
+    const [finished, setFinished] = useState(false);
+    const [loading, setLoading] = useState(false)
     const c1 = localStorage.getItem('c1');
     const salt = localStorage.getItem('salt');
 
@@ -16,10 +16,13 @@ export default function Solve({ gameAddress }: { gameAddress: string }) {
         const signer = await getSigner();
         const game = new ethers.Contract(gameAddress, RPSArtificate.abi, signer);
         const c2 = await game.c2();
-
+        const stake = await game.stake();
+        console.log(Number(stake), Number(c2))
+        if (Number(stake) === 0) { setShowSolve(true); setFinished(true); return; }
         if (Number(c2) !== 0) setShowSolve(true);
     }
 
+    useEffect(() => { console.log(showSolve, finished) }, [showSolve, finished])
 
     useEffect(() => {
         if (!gameAddress) return;
@@ -35,6 +38,7 @@ export default function Solve({ gameAddress }: { gameAddress: string }) {
 
     async function solve() {
         try {
+            setLoading(true)
             const provider = await getProvider();
             const signer = await getSigner();
             const game = new ethers.Contract(gameAddress, RPSArtificate.abi, signer);
@@ -67,30 +71,30 @@ export default function Solve({ gameAddress }: { gameAddress: string }) {
 
         } catch (error) {
             console.log(error)
-        }
+        } finally { setLoading(false) };
     }
 
     return (
-        <div className='flex flex-col items-center gap-6 mt-10'>
-            <div>
-                solve game : {gameAddress}
+        <div className='flex flex-col items-center bg-sky-100 rounded-xl m-10 p-10 gap-6 mt-10'>
+            <div className='flex flex-col gap-4'>
+                <span className='font-semibold text-lg'>solve game</span>
+                <span>{gameAddress}</span>
             </div>
-            <div>
-                {gameAddress && <J1Timeout gameAddress={gameAddress} />}
-            </div>
+            {loading && <span className='animate-pulse'>Solving Game ...</span>}
+
             <div>
                 {showSolve ?
-                    finished ? 
-                    <div className='text-xl font-semibold'>Game Ended</div>    
+                    finished ?
+                        <div className='text-xl font-semibold'>Game Ended</div>
+                        :
+                        < Button
+                            lable={loading ? "Solving" : 'Solve'}
+                            onClick={() => {
+                                solve();
+                            }}
+                        />
                     :
-                    < Button
-                        lable={'Solve'}
-                        onClick={() => {
-                            solve();
-                        }}
-                    />
-                    :
-                    <>Waiting for Player 2 ...</>
+                    <div className='animate-pulse'>Waiting for Player 2 ...</div>
                 }
 
 
