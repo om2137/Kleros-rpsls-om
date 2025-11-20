@@ -14,6 +14,7 @@ export default function Player2({ gameAddress }: { gameAddress: string; }) {
     // const [p2Address, setP2Address] = useState('');
     const [played, setPlayed] = useState(false);
     const [finished, setFinished] = useState(false)
+    const p2stake = '0.001';
 
     async function p2Move() {
         try {
@@ -21,7 +22,7 @@ export default function Player2({ gameAddress }: { gameAddress: string; }) {
             const signer = await getSigner();
             const game = new ethers.Contract(gameAddress, RPSArtificates.abi, signer)
 
-            const stake = ethers.parseEther('0.001')
+            const stake = ethers.parseEther(p2stake)
             const play = await game.play(selectedMove?.value, { value: stake });
             await play.wait();
             console.log(play);
@@ -60,7 +61,7 @@ export default function Player2({ gameAddress }: { gameAddress: string; }) {
             return () => clearInterval(interval);
         }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [gameAddress, finished]);
 
     return (
@@ -73,7 +74,9 @@ export default function Player2({ gameAddress }: { gameAddress: string; }) {
             <div>
                 <J2Timeout gameAddress={gameAddress} played={played} />
             </div>
-
+            <div className="flex capitalize items-center justify-center">
+                player 2 stake: {p2stake}
+            </div>
             <div className='flex items-center capitalize text-xl'>
                 <div>Choose Move:</div>
                 {
@@ -94,20 +97,20 @@ export default function Player2({ gameAddress }: { gameAddress: string; }) {
             <div className='text-xl'>
                 {selectedMove && `Selected Move: ${selectedMove.name}`}
             </div>
-            {played ? 
-                finished ? <>game Ended</>: 
-                <div>Waiting for player 1 to revel</div>
-            :<div>
+            {played ?
+                finished ? <>game Ended</> :
+                    <div>Waiting for player 1 to revel</div>
+                : <div>
 
-                <Button
-                    lable={'Play'}
-                    disabled={selectedMove ? false : true}
-                    onClick={() => {
-                        p2Move();
-                    }}
-                />
+                    <Button
+                        lable={'Play'}
+                        disabled={selectedMove ? false : true}
+                        onClick={() => {
+                            p2Move();
+                        }}
+                    />
 
-            </div>}
+                </div>}
         </div>
     )
 }

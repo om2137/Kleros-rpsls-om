@@ -21,7 +21,8 @@ export default function InitiateGame({ address, contractAddr, setContractAddr }:
 
     const [selectedMove, setSelectedMove] = useState<Move>();
     const [p2, setP2] = useState<string>('');
-    const salt = 12345
+    const salt = 12345;
+    const p1stake = '0.001'
     const base = typeof window !== "undefined" ? window.location.origin : "";
     const gameUrl = `${base}/${contractAddr}`;
 
@@ -42,7 +43,7 @@ export default function InitiateGame({ address, contractAddr, setContractAddr }:
 
             const hashvalue = await hasher.hash(selectedMove?.value, salt);// move selection and hashing
             console.log(hashvalue)
-            const stake = ethers.parseEther('0.001')
+            const stake = ethers.parseEther(p1stake)
 
             const game = new ethers.ContractFactory(RPSArtificate.abi, RPSArtificate.bytecode, signer);
             const gameInitiated = await game.deploy(hashvalue, p2, { value: stake })
@@ -77,6 +78,9 @@ export default function InitiateGame({ address, contractAddr, setContractAddr }:
                         />
                     )
                 }
+            </div>
+            <div>
+                Player 1 Stake : {p1stake}
             </div>
             <div className='text-xl'>
                 {selectedMove && `Selected Move: ${selectedMove.name}`}
