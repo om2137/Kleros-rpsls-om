@@ -21,7 +21,7 @@ export default function Player2({ gameAddress }: { gameAddress: string; }) {
             const signer = await getSigner();
             const game = new ethers.Contract(gameAddress, RPSArtificates.abi, signer)
 
-            const stake = ethers.parseEther('0.1')
+            const stake = ethers.parseEther('0.001')
             const play = await game.play(selectedMove?.value, { value: stake });
             await play.wait();
             console.log(play);

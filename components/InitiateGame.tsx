@@ -42,7 +42,7 @@ export default function InitiateGame({ address, contractAddr, setContractAddr }:
 
             const hashvalue = await hasher.hash(selectedMove?.value, salt);// move selection and hashing
             console.log(hashvalue)
-            const stake = ethers.parseEther('0.1')
+            const stake = ethers.parseEther('0.001')
 
             const game = new ethers.ContractFactory(RPSArtificate.abi, RPSArtificate.bytecode, signer);
             const gameInitiated = await game.deploy(hashvalue, p2, { value: stake })
