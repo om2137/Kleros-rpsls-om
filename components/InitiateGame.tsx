@@ -1,10 +1,11 @@
 'use client'
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import Button from './Button'
 import HasherArtificate from '@/utils/Hasher.json'
 import RPSArtificate from '@/utils/RPS.json'
 import { getSigner } from '@/utils/connect';
 import { ethers } from 'ethers';
+import { J1Timeout } from './Timeout';
 
 const HasherAddress = '0x8576601a2607af4368a5692897113104de006350';
 export const Moves = [
@@ -21,8 +22,9 @@ export default function InitiateGame({ address, contractAddr, setContractAddr }:
 
     const [selectedMove, setSelectedMove] = useState<Move>();
     const [p2, setP2] = useState<string>('');
+    const [loading, setLoading] = useState(false);
     const salt = 12345;
-    const p1stake = '0.001'
+    const [p1stake, setP1stake] = useState<string>('0.001');
     const base = typeof window !== "undefined" ? window.location.origin : "";
     const gameUrl = `${base}/${contractAddr}`;
 
@@ -37,6 +39,7 @@ export default function InitiateGame({ address, contractAddr, setContractAddr }:
 
     async function deployGame() {
         try {
+            setLoading(true)
             const signer = await getSigner();
             const hasher = new ethers.Contract(HasherAddress, HasherArtificate.abi, signer);
             if (!selectedMove) return;
@@ -51,68 +54,97 @@ export default function InitiateGame({ address, contractAddr, setContractAddr }:
 
             const gameAddress = await gameInitiated.getAddress();
             localStorage.setItem("c1", selectedMove?.value.toString());
-            localStorage.setItem('salt', salt.toString())
+            localStorage.setItem('salt', salt.toString());
+            localStorage.setItem('stake', p1stake);
+            localStorage.setItem('p2', p2)
 
             console.log(`game initiated by ${address}`);
 
             setContractAddr(gameAddress);
         } catch (e) { console.log(e) }
+        finally { setLoading(false) }
     }
 
-    useEffect(() => { console.log(selectedMove) }, [selectedMove])
+    // useEffect(() => { console.log(selectedMove) }, [selectedMove])
     return (
-        <div className='flex flex-col justify-center items-center gap-4'>
-            <div className='flex items-center capitalize text-xl'>
-                <div>Choose Move:</div>
-                {
-                    Moves.map((m) =>
-                        <Button
-                            key={m.value}
-                            lable={m.name}
-                            background={`cursor-pointer 
+        <div className='flex flex-col justify-center items-start bg-sky-100 m-10 p-10 rounded-xl gap-4'>
+            {!contractAddr && <>
+                <div className='flex flex-col justify-start items-start capitalize text-xl'>
+                    <div className='pb-2 px-2 text-lg font-semibold'>Choose Move:</div>
+                    <div>
+                        {
+                            Moves.map((m) =>
+                                <Button
+                                    key={m.value}
+                                    lable={m.name}
+                                    style=' rounded-full py-2 px-4 mx-2 capitalize'
+                                    background={`cursor-pointer 
                                 ${selectedMove && selectedMove.value === m.value ?
-                                    'bg-sky-950 border border-sky-950 text-white hover:bg-white hover:text-sky-950' :
-                                    'bg-white border border-sky-950 text-sky-950 hover:bg-sky-950 hover:text-white'} 
+                                            'bg-sky-950 border border-sky-950 text-white ' :
+                                            'bg-sky-50 border border-sky-950 text-sky-950 hover:bg-sky-950 hover:text-white'} 
                                 `}
-                            onClick={() => { setSelectedMove(m) }}
-                        />
-                    )
+                                    onClick={() => { setSelectedMove(m) }}
+                                />
+                            )
+                        }
+                    </div>
+                </div>
+                {selectedMove &&
+                    <div className='bg-sky-50 p-2 rounded-full capitalize'>
+                        <span>Selected Move:</span> <span className='font-bold'>{selectedMove.name}</span>
+                    </div>
                 }
-            </div>
-            <div>
-                Player 1 Stake : {p1stake}
-            </div>
-            <div className='text-xl'>
-                {selectedMove && `Selected Move: ${selectedMove.name}`}
-            </div>
-            <div>
-                Player 2:
-                <input type="text"
-                    className='border outline-none w-104 px-2 py-1'
-                    value={p2}
-                    onChange={(e) => { setP2(e.target.value) }}
-                />
-            </div>
-            <div>
-                {address ?
-                    <Button
-                        lable={'Initiate Game'}
-                        disabled={selectedMove && p2 ? false : true}
-                        onClick={() => {
-                            deployGame();
-                        }}
-                    />
-                    : 'Connect wallet to initiate game'
-                }
-            </div>
+                {loading && <div>Deploying game...</div>}
 
+                {!loading &&
+                    <div className="flex gap-2">
+                        <div>
+                            <label htmlFor="p1stake">stake:</label>
+
+                            <input type="number"
+                                id='p1stake'
+                                className='border bg-sky-50 rounded mx-2 outline-none w-20 px-2 py-1 no-spinner'
+                                value={p1stake}
+                                onChange={(e) => { setP1stake(e.target.value) }}
+                            />
+                        </div>
+                        <div>
+                            Player 2:
+                            <input type="text"
+                                className='border bg-sky-50 rounded mx-2 outline-none w-96 px-2 py-1 '
+                                value={p2}
+                                onChange={(e) => { setP2(e.target.value) }}
+                            />
+                        </div>
+                    </div>}
+
+                <div className='w-full flex justify-end'>
+                    {address ?
+                        <Button
+                            lable={loading ? 'Deploying Game':'Initiate Game'}
+                            disabled={selectedMove && p2 ? false : true}
+                            onClick={() => {
+                                deployGame();
+                            }}
+                        />
+                        : 'Connect wallet to initiate game'
+                    }
+                </div>
+            </>}
             {contractAddr &&
                 <>
-                    <div>
-                        game initiated at {contractAddr}
+                    <div className='capitalize'>
+                        <span className="font-semibold">game initiated at </span> {contractAddr}
                     </div>
-                    <div className='flex gap-4'>
-
+                    {selectedMove &&
+                        <div className='bg-sky-50 p-2 rounded-full capitalize'>
+                            <span>Selected P1 Move:</span> <span className='font-bold capitalize'>{selectedMove.name}</span>
+                        </div>
+                    }
+                    <div>
+                        {contractAddr && <J1Timeout gameAddress={contractAddr} />}
+                    </div>
+                    <div className='flex justify-start w-full gap-4'>
                         <div>
                             <Button
                                 lable={'Copy Link'}
@@ -130,6 +162,7 @@ export default function InitiateGame({ address, contractAddr, setContractAddr }:
                             />
                         </div>
                     </div>
+
                 </>
             }
 
