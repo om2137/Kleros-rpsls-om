@@ -6,7 +6,7 @@ import RPSArtificate from '@/utils/RPS.json'
 import { getSigner } from '@/utils/connect';
 import { ethers } from 'ethers';
 
-const HasherAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+const HasherAddress = '0x8576601a2607af4368a5692897113104de006350';
 export const Moves = [
     { name: "rock", value: 1 },
     { name: "paper", value: 2 },
@@ -20,7 +20,7 @@ export type Move = typeof Moves[number];
 export default function InitiateGame({ address, contractAddr, setContractAddr }: { address: string; contractAddr: string; setContractAddr: Dispatch<SetStateAction<string>> }) {
 
     const [selectedMove, setSelectedMove] = useState<Move>();
-    const [p2, setP2] = useState<string>('0x70997970c51812dc3a010c7d01b50e0d17dc79c8');
+    const [p2, setP2] = useState<string>('');
     const salt = 12345
     const base = typeof window !== "undefined" ? window.location.origin : "";
     const gameUrl = `${base}/${contractAddr}`;

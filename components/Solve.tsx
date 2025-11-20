@@ -42,8 +42,6 @@ export default function Solve({ gameAddress }: { gameAddress: string }) {
             const [j1, j2] = await Promise.all([
                 game.j1(),
                 game.j2(),
-                game.c2(),
-                game.stake(),
             ]);
 
             const bBeforeJ1 = await provider.getBalance(j1);
