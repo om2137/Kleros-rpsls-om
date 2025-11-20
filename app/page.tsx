@@ -10,7 +10,7 @@ export default function Page() {
   const [contractAddr, setContractAddr] = useState('');
 
   return (
-    <div className='text-black flex flex-col items-center'>
+    <div className='text-black flex flex-wrap justify-center items-center'>
       <Wallet address={address} setAddress={setAddress} />
       {address && <InitiateGame address={address} contractAddr={contractAddr} setContractAddr={setContractAddr} />}
       {contractAddr && <Solve gameAddress={contractAddr} />}
