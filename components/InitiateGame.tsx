@@ -23,7 +23,7 @@ export default function InitiateGame({ address, contractAddr, setContractAddr }:
     const [selectedMove, setSelectedMove] = useState<Move>();
     const [p2, setP2] = useState<string>('');
     const [loading, setLoading] = useState(false);
-    const salt = 12345;
+    const salt = ethers.hexlify(ethers.randomBytes(32)); 
     const [p1stake, setP1stake] = useState<string>('0.001');
     const base = typeof window !== "undefined" ? window.location.origin : "";
     const gameUrl = `${base}/${contractAddr}`;
